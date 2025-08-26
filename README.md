@@ -48,6 +48,13 @@ python tokens/train.py  # Token-level RNN training
 
 ## Test Results
 
+### Character-level RNN (Shakespeare dataset)  
+- **Architecture**: 2L-384H-192E (2.1M parameters)
+- **Validation accuracy**: 59.67%
+- **Training time**: 8.9 minutes (M1 Max)
+- **Throughput**: 5,018 samples/second
+- **Batch processing**: batch_size=2048 optimal for M1 Max
+
 ### Token-level RNN (Shakespeare dataset)
 - **Dataset**: 1.1M character corpus, BPE tokenization (vocab_size=500)
 - **Architecture**: 3L-512H-384E (6.5M parameters)
@@ -56,13 +63,6 @@ python tokens/train.py  # Token-level RNN training
 - **Throughput**: 6,149 samples/second
 - **Batch processing**: ~0.59s/batch (batch_size=4096)
 - **Optimizations**: MPS compilation, DataLoader optimization, power-of-2 sequence lengths
-
-### Character-level RNN (Shakespeare dataset)  
-- **Architecture**: 2L-384H-192E (2.1M parameters)
-- **Validation accuracy**: 59.67%
-- **Training time**: 8.9 minutes (M1 Max)
-- **Throughput**: 5,018 samples/second
-- **Batch processing**: batch_size=2048 optimal for M1 Max
 
 ### SimpleCNN (CIFAR-10 dataset)
 - **Architecture**: Base CNN with 64 channels (1.6M parameters)
@@ -74,21 +74,12 @@ python tokens/train.py  # Token-level RNN training
 
 ## Usage Examples
 
-```python
-# Basic RNN training
-from algorithms.rnn.core.trainer import RNNTrainer
-from algorithms.rnn.core.device_utils import get_best_device
-
-device = get_best_device()  # Auto-detects MPS > CUDA > CPU
-# ... training code
-```
-
 ```bash
-# Run RNN with optimal settings
+# Best RNN (token-level with BPE)
 cd algorithms/rnn
-PYTHONPATH=. python tokens/train.py
+python tokens/train.py
 
-# Run CNN with intelligent training
+# Best CNN (intelligent training)
 cd algorithms/cnn  
 python train_intelligent.py
 ```
