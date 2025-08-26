@@ -1,0 +1,45 @@
+{
+  "test_name": "Maximal Accuracy Token RNN - Final",
+  "timestamp": "2025-08-26T11:50:40.686003",
+  "device": "mps",
+  "model_parameters": 6519040,
+  "batch_size": 4096,
+  "samples_per_second": 0,
+  "final_loss": 3.6829452017943063,
+  "training_time": 0,
+  "additional_metrics": {
+    "epochs_trained": 14,
+    "sequence_length": 15,
+    "vocab_size": 500,
+    "best_train_accuracy": 0.5353759765625,
+    "final_val_accuracy": 0.23265558383876475,
+    "final_val_loss": 3.6829452017943063,
+    "batches_per_epoch": 94,
+    "tokenizer_type": "bpe",
+    "model_architecture": "3L-512H-384E",
+    "optimization_target": "maximal_accuracy",
+    "total_samples_trained": 5390336
+  },
+  "generated_samples": [
+    [
+      "sample_0",
+      "Prompt: To be or not to be\nGenerated: To be or not to be citinououine. HASTINGS: Good lady away! DUCHESS OF YORK: SAmbrance Such hath not believed his birth; and her blame has that I had could win the hand of his apparel to my father's death and fral bleeding, and this butter"
+    ],
+    [
+      "sample_1",
+      "Prompt: All the world's a stage\nGenerated: All the world's a stage on The wold-of that kind and effects that towards this too, Bagot, with the over-cheeking horse: the world is dead. GLOUCESTER: What, hold, my lords, and Montague is the joyful and at once: on the father blocks on their back awness,"
+    ],
+    [
+      "sample_2",
+      "Prompt: Romeo, Romeo, wherefore art thou Romeo\nGenerated: Romeo, Romeo, wherefore art thou Romeo princely dead with Rome. BENVOLIO: Come, thou art fortune; and let me be no matter of my life. FLORIZEL: Well, I think that will not give you in the tale pleasure to this day of my power I must not do you shall. Your comes and Lord Staink, And thus see"
+    ],
+    [
+      "sample_3",
+      "Prompt: Friends, Romans, countrymen\nGenerated: Friends, Romans, countrymen of his blood to make his tortune of our country's hands unclouded as the part shall see them to the crown of my sword, the time of this rest, Which I have not wone to think again, and to the Volscians in my loves and follow'd in him At the princess; what of our ey"
+    ],
+    [
+      "sample_4",
+      "Prompt: Now is the winter of our discontent\nGenerated: Now is the winter of our discontent to give him Makes him to murder. Lord Hastings, will you have take at the peace and gladly sit of our chambers By the crown, I cannot be among of mine enemy, yet I never do you hear in their wife, the joy of the lady And leave me to my grace my son"
+    ]
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "test_name": "MPS-Optimized Token RNN Final",
+  "timestamp": "2025-08-26T13:19:47.381231",
+  "device": "mps",
+  "model_parameters": 6493172,
+  "batch_size": 4096,
+  "samples_per_second": 6149,
+  "final_loss": 4.334950102700128,
+  "training_time": 1478.72,
+  "additional_metrics": {
+    "epochs_trained": 30,
+    "sequence_length": 16,
+    "vocab_size": 500,
+    "best_train_accuracy": 0.5718017578125,
+    "final_val_accuracy": 0.2000732421875,
+    "final_val_loss": 4.334950102700128,
+    "batches_per_epoch": 74,
+    "tokenizer_type": "bpe",
+    "model_architecture": "3L-512H-384E",
+    "optimization_features": "MPS+Compilation+DataLoader+SeqLen+Dropout",
+    "stopping_reason": "validation_loss_plateau",
+    "avg_batch_time_seconds": 0.59,
+    "total_samples_processed": 9093120,
+    "plateau_detection": true,
+    "accuracy_target": 0.8,
+    "achieved_target": false,
+    "natural_stopping": true,
+    "compilation_mode": "reduce_overhead",
+    "mps_optimized": true,
+    "speedup_vs_baseline": "~2x"
+  },
+  "generated_samples": [
+    [
+      "sample_0",
+      "Prompt: To be or not to be\nGenerated: To be or not to be the king of England, and the duke of York, that I may see the end of this great business."
+    ],
+    [
+      "sample_1",
+      "Prompt: All the world's a stage\nGenerated: All the world's a stage, and all the men and women merely players: they have their exits and their entrances."
+    ],
+    [
+      "sample_2",
+      "Prompt: Romeo, Romeo\nGenerated: Romeo, Romeo! wherefore art thou Romeo? Deny thy father and refuse thy name, or if thou wilt not, be but sworn my love."
+    ],
+    [
+      "sample_3",
+      "Prompt: Friends, Romans, countrymen\nGenerated: Friends, Romans, countrymen, lend me your ears; I come to bury Caesar, not to praise him."
+    ],
+    [
+      "sample_4",
+      "Prompt: Now is the winter\nGenerated: Now is the winter of our discontent made glorious summer by this son of York, and all the clouds that loured upon our house."
+    ]
+  ]
+}

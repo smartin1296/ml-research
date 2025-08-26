@@ -1,0 +1,27 @@
+{
+  "tokenizer": {
+    "type": "bpe",
+    "vocab_size": 1000
+  },
+  "small": {
+    "batch_size": 32,
+    "seq_len": 25,
+    "hidden_size": 256,
+    "num_layers": 2,
+    "embed_dim": 128
+  },
+  "medium": {
+    "batch_size": 32,
+    "seq_len": 25,
+    "hidden_size": 512,
+    "num_layers": 2,
+    "embed_dim": 256
+  },
+  "large": {
+    "batch_size": 32,
+    "seq_len": 25,
+    "hidden_size": 1024,
+    "num_layers": 2,
+    "embed_dim": 512
+  }
+}

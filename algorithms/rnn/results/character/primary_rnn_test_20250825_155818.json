@@ -1,0 +1,33 @@
+{
+  "test_name": "Primary RNN Test",
+  "timestamp": "2025-08-25T15:58:18.920357",
+  "device": "mps",
+  "model_parameters": 2123011,
+  "batch_size": 2048,
+  "samples_per_second": 4061,
+  "final_loss": 1.3493730168823803,
+  "training_time": 659.6272089481354,
+  "additional_metrics": {
+    "epochs": 3,
+    "sequence_length": 25,
+    "final_train_loss": 1.3909737568929654,
+    "best_val_accuracy": 0.5834939705025328,
+    "final_val_accuracy": 0.5834939705025328,
+    "vocab_size": 67,
+    "batches_per_epoch": 436
+  },
+  "generated_samples": [
+    [
+      "To be",
+      "To be not a bold, as I loved him,\nHad some very heads agreed on, as thou wert a sadder?\n\nLUCIO:\nThis is t"
+    ],
+    [
+      "The",
+      "Thers of my thus and that let him so drink our own\nThat's death made his fair: and here have many broth"
+    ],
+    [
+      "Hello",
+      "Hellow:\nI think?\n\nQUEEN MARGARET:\nIf he cannot love them fair in our rest and works\nUpon the fapreward a "
+    ]
+  ]
+}

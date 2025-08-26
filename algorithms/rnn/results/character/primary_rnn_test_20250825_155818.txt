@@ -1,0 +1,43 @@
+Primary RNN Test Results
+========================
+Timestamp: 2025-08-25 15:58:18.920191
+Device: mps
+Model Parameters: 2,123,011
+Batch Size: 2,048
+Throughput: 4,061 samples/second
+Final Loss: 1.349373
+Training Time: 659.63 seconds
+
+Additional Metrics:
+epochs: 3
+sequence_length: 25
+final_train_loss: 1.390974
+best_val_accuracy: 0.583494
+final_val_accuracy: 0.583494
+vocab_size: 67
+batches_per_epoch: 436
+
+Text Generations:
+
+Seed: 'To be'
+Generated: To be not a bold, as I loved him,
+Had some very heads agreed on, as thou wert a sadder?
+
+LUCIO:
+This is t
+--------------------------------------------------
+
+Seed: 'The'
+Generated: Thers of my thus and that let him so drink our own
+That's death made his fair: and here have many broth
+--------------------------------------------------
+
+Seed: 'Hello'
+Generated: Hellow:
+I think?
+
+QUEEN MARGARET:
+If he cannot love them fair in our rest and works
+Upon the fapreward a 
+--------------------------------------------------
+
