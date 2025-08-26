@@ -40,6 +40,12 @@ python tokens/train.py  # Token-level RNN training
 - **Features**: Automatic device detection, plateau-based early stopping
 - **Training**: OneCycleLR scheduling, mixed precision support
 
+### CNN Module (Complete)
+- **Architectures**: SimpleCNN, ResNet variants with proper initialization
+- **Features**: Intelligent training with adaptive stopping criteria
+- **Training**: No hardcoded epoch limits, automatic convergence detection
+- **Performance**: 86.15% validation accuracy on CIFAR-10
+
 ## Test Results
 
 ### Token-level RNN (Shakespeare dataset)
@@ -58,6 +64,14 @@ python tokens/train.py  # Token-level RNN training
 - **Throughput**: 5,018 samples/second
 - **Batch processing**: batch_size=2048 optimal for M1 Max
 
+### SimpleCNN (CIFAR-10 dataset)
+- **Architecture**: Base CNN with 64 channels (1.6M parameters)
+- **Validation accuracy**: 86.15%
+- **Test accuracy**: 80.80%
+- **Training time**: 21.7 minutes total (55 epochs, intelligent stopping)
+- **Throughput**: ~9,500 samples/second
+- **Batch processing**: batch_size=128 optimal for M1 Max
+
 ## Usage Examples
 
 ```python
@@ -70,9 +84,13 @@ device = get_best_device()  # Auto-detects MPS > CUDA > CPU
 ```
 
 ```bash
-# Run with optimal settings
+# Run RNN with optimal settings
 cd algorithms/rnn
 PYTHONPATH=. python tokens/train.py
+
+# Run CNN with intelligent training
+cd algorithms/cnn  
+python train_intelligent.py
 ```
 
 ## Core Principles
