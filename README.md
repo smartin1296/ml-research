@@ -1,147 +1,84 @@
-# ML Environment - Research Grade Neural Networks
+# Machine Learning Research Environment
 
-A comprehensive machine learning research environment implementing state-of-the-art neural network architectures with modern PyTorch practices and comprehensive benchmarking capabilities.
+Machine learning research environment for testing different neural network architectures on various datasets. All implementations use industry-standard libraries (PyTorch, NumPy, scikit-learn) with comprehensive benchmarking.
 
-## 🚀 Key Features
-
-- **Research-Grade Implementations**: SOTA RNN (LSTM, GRU) with proper initialization and modern training techniques
-- **Cross-Platform GPU Support**: Optimized for Apple Silicon (M1/M2/M3), NVIDIA CUDA, and CPU
-- **Peak Performance**: 5,720+ samples/sec on M1 Max with 59.67% validation accuracy
-- **Modern Training**: Mixed precision, gradient clipping, learning rate scheduling, early stopping
-- **Comprehensive Benchmarking**: Statistical testing, performance metrics, text generation
-- **Standardized Results**: Consistent human-readable and machine-readable output formats
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
-ml_environment/
-├── algorithms/              # Algorithm implementations
-│   ├── rnn/                # ✅ RNN (LSTM, GRU) - COMPLETED
-│   ├── cnn/                # 🔄 CNN (ResNet, etc.) - TODO  
-│   ├── transformers/       # 🔄 Transformers (BERT, GPT, ViT) - TODO
-│   ├── reasoning_nns/      # 🔄 Test-time compute models - TODO
-│   └── rcl/                # 🔄 Proprietary RCL algorithm - TODO
-├── utils/                  # Shared utilities
-│   ├── benchmarking.py     # Performance benchmarking tools
-│   ├── stats.py            # Statistical analysis & experiment logging
-│   └── data_utils.py       # Dataset handling utilities
-├── data/                   # Data organization
-└── CLAUDE.md              # Development reference guide
+├── algorithms/              # Neural network implementations
+│   ├── rnn/                # Recurrent networks (LSTM, GRU)
+│   ├── cnn/                # Convolutional networks  
+│   ├── transformers/       # Transformer architectures
+│   └── reasoning_nns/      # Test-time compute models
+├── data/                   # Dataset storage and preprocessing
+├── utils/                  # Benchmarking and analysis utilities
+└── requirements.txt        # Dependencies
 ```
 
-## ⚡ Quick Start
+## Environment Setup
 
-### Prerequisites
+### Hardware
+- Primary testing platform: M1 Max MacBook Pro, 64GB RAM
+- Cross-platform support: Apple Silicon (MPS), NVIDIA CUDA, CPU
+
+### Installation
 ```bash
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Run SOTA RNN Training
+### Quick Start
 ```bash
 cd algorithms/rnn
-python test.py  # 3 epochs, optimal M1 Max settings (batch_size=2048)
+python tokens/train.py  # Token-level RNN training
 ```
 
-**Expected Results:**
-- **Training Time**: ~9 minutes (M1 Max) / ~30 minutes (CPU)
-- **Validation Accuracy**: ~59-60% (character-level next-token prediction)
-- **Throughput**: 5,000-6,000 samples/sec (M1 Max) / ~32 samples/sec (CPU)
-- **Model Size**: 2.1M parameters
+## Implementation Status
 
-## 🔥 Performance Benchmarks
+### RNN Module (Complete)
+- **Character-level**: LSTM with layer normalization, gradient clipping
+- **Token-level**: BPE tokenization with MPS optimization
+- **Features**: Automatic device detection, plateau-based early stopping
+- **Training**: OneCycleLR scheduling, mixed precision support
 
-**Apple Silicon M1 Max**: 5,720 samples/sec peak, 59.67% validation accuracy, 178x CPU speedup
+## Test Results
 
-**Optimal Configuration**: batch_size=2048, 2.1M parameters, ~9 minutes training
+### Token-level RNN (Shakespeare dataset)
+- **Dataset**: 1.1M character corpus, BPE tokenization (vocab_size=500)
+- **Architecture**: 3L-512H-384E (6.5M parameters)
+- **Training accuracy**: 57.18% (30 epochs, plateau detected)
+- **Training time**: 24.6 minutes (M1 Max)
+- **Throughput**: 6,149 samples/second
+- **Batch processing**: ~0.59s/batch (batch_size=4096)
+- **Optimizations**: MPS compilation, DataLoader optimization, power-of-2 sequence lengths
 
-*Detailed benchmarks available in `algorithms/rnn/README.md`*
+### Character-level RNN (Shakespeare dataset)  
+- **Architecture**: 2L-384H-192E (2.1M parameters)
+- **Validation accuracy**: 59.67%
+- **Training time**: 8.9 minutes (M1 Max)
+- **Throughput**: 5,018 samples/second
+- **Batch processing**: batch_size=2048 optimal for M1 Max
 
-## 🧠 RNN Implementation
-
-**Features**: SOTA LSTM with proper initialization, layer normalization, bidirectional support
-**Training**: Mixed precision, gradient clipping, learning rate scheduling, early stopping  
-**Generation**: Character-level text with controllable sampling
-
-*Complete implementation details in `algorithms/rnn/README.md`*
-
-## 📊 Results and Analysis
-
-All experiments generate comprehensive results in both human-readable and JSON formats:
-
-```
-Primary RNN Test Results
-========================
-Timestamp: 2025-08-25 13:22:03
-Device: mps
-Model Parameters: 2,123,011
-Validation Accuracy: 59.67%
-Final Loss: 1.347237
-Training Time: 533.81 seconds
-Throughput: 5,018 samples/second
-
-Text Generations:
-Seed: 'To be'
-Generated: To behall in sun: away desire, still we no more...
-```
-
-## 🔧 Development
-
-### Core Principles
-- **Industry Standards Only**: PyTorch, scikit-learn, NumPy - no exotic dependencies
-- **Pure Python**: Maximum compatibility and reproducibility  
-- **Benchmark Against Standards**: All algorithms compared to established baselines
-- **Statistical Rigor**: Significance testing for model comparisons
-
-### Key Lessons Learned
-- LayerNorm requires default settings for proper gradient flow
-- M1 Max optimal: batch_size=2048, unified memory scaling
-- Cross-platform device detection essential for portability
-
-## 🎯 Usage
-
-```bash
-# Quick start
-cd algorithms/rnn && python test.py
-```
+## Usage Examples
 
 ```python
-# Basic usage
-from rnn import LSTM, RNNTrainer, create_sample_dataset
-from device_utils import get_best_device
+# Basic RNN training
+from algorithms.rnn.core.trainer import RNNTrainer
+from algorithms.rnn.core.device_utils import get_best_device
 
-# Auto device detection and training
-device = get_best_device()  # MPS > CUDA > CPU
-train_loader, val_loader, tokenizer = create_sample_dataset()
-model = LSTM(192, 384, 2, layer_norm=True)
-trainer = RNNTrainer(model, optimizer, criterion, device)
-history = trainer.train(train_loader, val_loader, num_epochs=3)
+device = get_best_device()  # Auto-detects MPS > CUDA > CPU
+# ... training code
 ```
 
-*Detailed examples in `algorithms/rnn/README.md`*
+```bash
+# Run with optimal settings
+cd algorithms/rnn
+PYTHONPATH=. python tokens/train.py
+```
 
-## 📈 Future Roadmap
+## Core Principles
 
-- **CNN Module**: ResNet, EfficientNet implementations
-- **Transformer Module**: BERT, GPT, Vision Transformer
-- **Reasoning NNs**: Test-time compute and reasoning capabilities
-- **Advanced Benchmarking**: Automated hyperparameter optimization
-- **Multi-GPU Support**: Distributed training capabilities
-
-## 🤝 Contributing
-
-This environment follows strict engineering practices:
-1. All new algorithms must be benchmarked against standards
-2. Comprehensive testing with statistical significance analysis  
-3. Cross-platform compatibility (Apple Silicon, NVIDIA, CPU)
-4. Standardized results format for reproducibility
-
-## 📄 License
-
-Open source research environment. See individual algorithm implementations for specific licensing.
-
----
-
-**Powered by**: PyTorch 2.0+, optimized for Apple Silicon M1/M2/M3 and NVIDIA GPUs
-
-**Performance**: 5,720+ samples/sec peak throughput, 59.67% validation accuracy, research-grade implementations
+- Industry-standard libraries only (PyTorch, NumPy, scikit-learn)
+- Cross-platform compatibility
+- Comprehensive benchmarking with statistical analysis
+- Reproducible results with standardized output formats
+- No exotic dependencies for maximum portability
