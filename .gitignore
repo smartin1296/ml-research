@@ -19,9 +19,14 @@ venv.bak/
 checkpoints/
 *.log
 
-# Results and data (comment out if you want to include them)
-# results/
-# data/
+# Results and data - too large for git
+results/
+data/raw/
+data/processed/
+
+# Large tokenizer files
+**/tokenizer*.json
+checkpoints/
 
 # macOS
 .DS_Store
