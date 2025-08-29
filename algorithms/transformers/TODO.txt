@@ -1,0 +1,148 @@
+Building a State-of-the-Art Transformer LLM on an M1 Max
+Step 1: Set Up the Apple Silicon Environment
+Install PyTorch with MPS support: Ensure you have PyTorch 2.x installed with Apple’s Metal Performance Shaders (MPS) backend enabled. This allows training on the M1 Max 32-core GPU. In your training script, verify that the device is set to MPS if available (as in your code)
+GitHub
+.
+Use 32-bit precision for stability: Due to known limitations of the MPS backend with FP16, use full FP32 precision for training on Apple Silicon unless recent updates have improved FP16 support
+GitHub
+. This avoids numerical issues – your TinyStories experiment was done in pure FP32 on MPS for this reason
+GitHub
+.
+Install dependencies: Make sure supporting libraries are installed. Your project already uses Hugging Face datasets for OpenWebText and might rely on others like tqdm for progress bars
+GitHub
+. Also install a tokenizer library if you plan to use a more advanced tokenizer than the provided one (see Step 2).
+Step 2: Prepare the OpenWebText Dataset
+Download and preprocess data: Utilize your OpenWebTextDataset loader to download the OpenWebText corpus and filter/tokenize it
+GitHub
+GitHub
+. This will automatically cache the processed data under ~/.cache/openwebtext by default. The loader applies basic quality filters (removing very short or repetitive texts) and creates a 90/10 train-validation split by hashing content
+GitHub
+. Ensure you have ~8 million documents (the full OpenWebText) or a subset as needed.
+Tokenize the text: For each document, convert text to token IDs. Use a subword tokenizer with a large vocabulary so the model can represent the diverse content. For example, GPT-2 uses a Byte-Pair Encoding (BPE) with a vocab size of 50,257
+xinyadu.github.io
+. You could use the GPT-2 tokenizer or train a SentencePiece model (~30k–50k tokens) on OpenWebText. This will perform much better than a tiny word-level vocab (your current tokenizer has only 2048 tokens, designed for TinyStories
+GitHub
+GitHub
+). A larger vocab reduces <UNK> tokens and lets the model handle rare words and byte sequences
+huggingface.co
+.
+Cache tokenized data: It’s efficient to flatten all tokenized texts into one long sequence and save to disk (as your cached_tokens.npy). Your training script expects a flat array of tokens
+GitHub
+ which it then splits into sequences during batching. Use the loader to produce token lists, then concatenate them and save (making sure to include end-of-document tokens like <EOS> so the model learns when texts end). By caching this, you avoid re-processing the dataset on every run
+GitHub
+.
+Create train/validation splits: Ensure the validation set is kept separate for evaluation. Your loader already does a 10% split
+GitHub
+. If you flattened everything into one array, you can also split 90/10 by index
+GitHub
+, which roughly matches the loader’s split. Just be careful to shuffle or segment by document to avoid bleed-over between train and val. With the data prepared, you can use PyTorch’s DataLoader to iterate over it in sequence chunks (your TokenDataset takes care of making input-target pairs for each chunk of length N)
+GitHub
+GitHub
+.
+Step 3: Design the Transformer Architecture
+Choose model size your hardware can handle: Aim for the largest model that fits in 64 GB memory and can train in a reasonable time. A good starting point is on the order of 100–300 million parameters, which is comparable to GPT-2 Small/Medium. For example, a 12-layer, 768-dimension model (12 heads) is ~110M parameters, while 24 layers at 1024-dim (16 heads) is ~340M (GPT-2 Medium)
+GitHub
+. Models beyond that (billions of params) will likely be too slow on an M1 Max. You can start with a smaller config to debug, then scale up. Your code will print the total param count on initialization
+GitHub
+.
+Use state-of-the-art Transformer components: Your implementation already incorporates many modern best practices: Pre-normalization with RMSNorm, Rotary Positional Embeddings (RoPE), and SwiGLU activation in feed-forward layers
+GitHub
+. These features are used in cutting-edge models like Meta’s LLaMA and Google’s PaLM because they improve training stability and model quality. For instance, LLaMA replaces LayerNorm with RMSNorm for efficiency
+x.com
+, and uses SwiGLU in the feed-forward network for a boost in performance
+dev.to
+. RoPE is a relative positional encoding scheme that enables better generalization to longer sequences than fixed embeddings
+aiexpjourney.substack.com
+. Your TransformerBlock class already combines these: it applies RMSNorm before attention and feed-forward (pre-norm), uses multi-head attention with RoPE, and a SwiGLU FFN, each with residual connections
+GitHub
+GitHub
+. This architecture is a solid foundation for a “general purpose” LLM.
+Set key hyperparameters: In your SOTAConfig, configure the model dimensions. Use a context length that matches or exceeds other small LMs – e.g. 1024 tokens (GPT-2 used 1024). If memory allows, even 2048 tokens context is great for a general LLM (your config default is 2048
+GitHub
+). Set the number of layers and d_model based on the parameter budget decided above (you can adjust num_layers and d_model). Ensure d_model is divisible by num_heads and choose num_heads such that each head dimension is 64 or 128 (typical in many models). For example, 768 dim with 12 heads = 64 per head (used in GPT-2); 1024 dim with 16 heads = 64 per head; 1024 with 8 heads = 128 per head, etc. Your config auto-computes the feed-forward d_ff size as 8/3 * d_model (rounded to multiple of 256) which follows the LLaMA/PaLM SwiGLU recommendation
+GitHub
+. You can leave that formula as is to size the FFN.
+Minimal regularization: Set dropout low (e.g. 0.1 or even 0) as modern transformer models often use little to no dropout when trained on large corpora
+GitHub
+. If your model is on the smaller side or you notice overfitting, you can use dropout 0.1, but many recent LLMs (especially >100M params on vast data) turn off dropout during pretraining
+GitHub
+.
+Enable FlashAttention for speed: Your attention implementation can use PyTorch 2’s optimized scaled_dot_product_attention when use_flash_attn=True
+GitHub
+. Keep this flag on – it will significantly accelerate training by using a faster matrix-multiplication kernel for the attention step (while also saving some memory). This requires PyTorch 2.x (which you have) and works on MPS as long as the operation is supported.
+Tie embeddings (optional): Consider setting tie_embeddings=True in the config to use one shared weight matrix for the token embedding and output projection
+GitHub
+. This reduces the number of parameters (especially if vocab is large) and often slightly improves efficiency without hurting accuracy, which is why many language models tie embeddings. Your code supports this toggle
+GitHub
+. If you have plenty of memory and want maximum flexibility you can leave them untied, but tying is a reasonable choice to save ~10–20% of parameters for a very large vocab.
+Step 4: Set the Training Objective and Hyperparameters
+Objective – causal language modeling: Train the model to predict the next token in the sequence (standard left-to-right language modeling). This is implemented via a cross-entropy loss between the model’s output logits and the actual next-token IDs
+GitHub
+. This objective maximizes the model’s likelihood of the training text and has been the cornerstone of GPT-style LLM training. It will allow the model to generate coherent continuations and is the most broadly useful objective for a general-purpose LLM. (While there are more complex setups like UL2’s mixture of denoising tasks, those are beyond scope and mainly help if you need the model to also fill in blanks or do bidirectional tasks. Sticking with next-token prediction is the most straightforward and effective for generation accuracy.)
+Batching and sequence length: Choose a batch size and sequence length that maximize GPU utilization without overflowing memory. For example, if using 1024 token sequences, you might start with batch size 8 or 16 on the M1 Max and see if it fits. Your current example used 128 seq length and batch 32
+GitHub
+, but for final training you’ll want much longer sequences (512 or 1024 tokens) to fully utilize the context learning. You can adjust batch_size in the DataLoader; if you can’t fit a large batch in GPU memory, use gradient accumulation to simulate a larger batch
+GitHub
+. For instance, accumulating gradients over 2–4 mini-batches effectively increases the batch size without storing all in memory at once
+GitHub
+.
+Learning rate schedule: Use a learning rate scheduler with warmup and decay. Large transformers benefit from a small warmup period (to avoid unstable early updates) and then a gradual decay to a low LR for fine tuning at the end. A good approach is cosine annealing or a one-cycle schedule
+GitHub
+. For example, you might: warm up from 0 to a peak LR of ~1e-3 over the first few thousand steps, then cosine decay back down near 0 by the end of training. This was found to converge better than a linear decay in your notes
+GitHub
+ and is common in transformer training. The peak LR can be on the order of 1e-3 for small models; you observed that 3e-4 was too low in one experiment and 1e-3 achieved much better convergence
+GitHub
+ (that was for a tiny 4-layer model on TinyStories, which hit 99.9% accuracy). For a larger model on a massive dataset, you might not need to go as high as 1e-3 if that risks overshooting – many implementations use ~1e-4 to 2e-4 for models in the hundreds of millions of parameters. The key is to monitor training loss and adjust if the model isn’t learning or if it’s diverging.
+Optimizer and regularization: AdamW is the standard optimizer for transformer LM training, which you are already using
+GitHub
+GitHub
+. Use the recommended hyperparams: $\beta_1=0.9$, $\beta_2=0.98$ (a slightly lower beta2 than the default 0.999, to respond a bit faster to gradient changes in training)
+GitHub
+. Set a weight decay of around 0.01 on non-bias parameters
+GitHub
+ – this is a common setting to prevent weights from growing too large (your code used 0.1 which is a bit high; 0.01 is the “transformer-standard” per your notes
+GitHub
+). You already include gradient clipping at 1.0 norm, which is important to stabilize training and prevent rare large updates
+GitHub
+ – keep this in place. Optionally, implement label smoothing (e.g. 10% smoothing) on the cross-entropy loss to prevent overconfident predictions
+GitHub
+. This means instead of one-hot targets, use a target distribution that’s 90% correct token, 10% spread over others. Label smoothing can improve generalization slightly by not peaking the softmax to 100% on any token
+GitHub
+. (Do note, as your internal log says, it can hurt on very small datasets
+GitHub
+, but for a large corpus like OpenWebText it should be beneficial or at least benign.) In PyTorch you can do this by passing label_smoothing=0.1 to F.cross_entropy.
+Step 5: Train the Model (Iterate and Monitor)
+Launch training: With the config and data ready, run your training loop. Ensure the model is on the MPS device and beginning to learn. Your training script already logs training loss every 100 steps
+GitHub
+; watch these to ensure the loss is steadily decreasing. On the first epoch, the loss will start high (around ~log(vocab_size) for random predictions, e.g. ~10 if using a 50k vocab). It should rapidly drop in the first few thousand updates if learning properly. If you don’t see it falling, you may need to increase the learning rate or check for bugs.
+Use periodic validation: Every so often (for example, after each epoch or every N training steps), evaluate on the held-out validation set. Your code does a quick val loss calculation after each epoch (limited to 50 batches in the sample code)
+GitHub
+GitHub
+. You should extend this to evaluate on the entire validation set for a more accurate measure (or at least a large sample of it). Track the validation loss and compute validation perplexity (perplexity = exp(loss)). This is a key metric: for instance, the 117M-param GPT-2 model achieves ~37.5 perplexity on WikiText-103
+github.com
+. Your goal should be to approach (or beat) such perplexity levels if your model is of similar scale. A lower perplexity indicates a more accurate model.
+Longer training for better performance: To compete favorably with other small models, be prepared to train for many iterations. OpenWebText is large (potentially billions of tokens), and even one full pass (epoch) might be on the order of 3–5 billion token examples depending on how you sliced it. Many models are trained for multiple epochs or until loss convergence. Monitor the trend: if validation loss is still improving, continue training. If it plateaus, you might stop early or adjust the learning schedule (e.g. decay learning rate further). Given your data size, a smaller model might benefit from a second epoch to fully fit common patterns, but keep an eye on any signs of overfitting (e.g. training loss continuing to go down while val stalls or worsens). In large-scale LM training, overfitting is less common, but since your model is relatively small, it can eventually memorize frequent data if over-trained.
+Resource monitoring: Watch memory usage and iteration speed. The M1 Max GPU is capable, but not as fast as high-end NVIDIA GPUs – expect iteration times in the order of a few hundred milliseconds to >1 sec each, depending on model and batch size. Ensure the process isn’t swapping or running out of RAM (unified memory) – if you hit memory limits, reduce batch size or sequence length, or enable gradient checkpointing in the config to trade compute for memory
+GitHub
+. Your model supports gradient_checkpointing=True which will checkpoint each transformer block’s forward pass to save memory at the cost of an extra backward pass computation
+GitHub
+. This is useful if you push to a very large model near the memory limit.
+Step 6: Evaluate and Benchmark the Model
+Compute final metrics: After training, evaluate the model on the validation set (and optionally other benchmark datasets). Calculate the final perplexity. If you achieve a validation perplexity in the 20s or 30s on WikiText-103 or a similar held-out corpus, that’s in line with small GPT-2-class models
+github.com
+. You can also check performance on specific tasks: for example, measure how often the model correctly predicts the last word in LAMBADA passages (a common zero-shot test for coherence) or accuracy on Winograd Schema (for commonsense resolution). If your model is trained well on OpenWebText, it should “compete favorably” with other small models on these benchmarks – meaning its scores should be similar to GPT-2 of comparable size. GPT-2 small (117M) for instance gets about 45% accuracy on LAMBADA and GPT-2 medium (~345M) around 63% (for reference). Aim to reach in that ballpark if possible.
+Qualitative evaluation: Try out the model’s text generation ability. Use the .generate() method in your SOTATransformer (which does top-k/top-p sampling by default)
+GitHub
+GitHub
+. Feed it various prompts and see if it produces coherent, on-topic continuations. This is a great way to subjectively judge its language ability. Because you trained on a broad web corpus, you should see the model complete general sentences, respond to prompts, or mimic various styles reasonably well (though not as strongly as very large models). If you find issues like repetitive looping or degenerate output, you might adjust decoding parameters (temperature, top-p) or it could indicate the need for more training. Your notes mention fixing repetition by adjusting model size and sampling settings
+GitHub
+, so keep an eye out for that.
+Compare to baselines: To concretely benchmark, you can load a pre-trained GPT-2 model of similar size (via Hugging Face) and evaluate it on the same metrics for a direct comparison. This will show if your model is “favorable” in performance. For example, if your 150M-param model gets perplexity close to GPT-2 117M’s 37.5 on WT103, that’s a success
+github.com
+. If it falls short, you may need more training time, a larger model, or improvements in tuning. Conversely, you might beat GPT-2 small on some metrics given the enhancements like SwiGLU and a longer context – those modern tweaks can give an edge in efficiency and accuracy at the same scale.
+Step 7: Further Improvements (Post-training)
+Fine-tuning for specific tasks: With a solid pretrained model, you could fine-tune it on downstream tasks or instruction data if desired. For instance, you could apply supervised fine-tuning on a Q&A dataset, or conversational data to make the model more interactive. This wasn’t requested in your question, but it’s a common next step to make a general LLM more useful. Keep in mind this requires careful handling (and usually smaller learning rates).
+Distillation or quantization: If you want to deploy the model or speed it up, you could look into distilling it into an even smaller model or quantizing weights (e.g. 8-bit quantization) to run faster. The M1 Max has 64 GB RAM which is plenty for inference, but quantization could allow using less memory and gaining speed. For training, though, stick to full precision for best results.
+Monitoring and debugging: Always save checkpoints of your model periodically during training (at least the final weights are saved as sota_transformer.pt by your script
+GitHub
+). This way, if something goes wrong or you want to evaluate intermediate stages, you have those snapshots. Keep logs of training/validation loss over time to see the curve and make sure the training is progressing normally (no sudden explosions or stagnations). The comprehensive approach – from cutting-edge architecture to proper training schedules – should yield a model that is state-of-the-art for its class. By following these steps, you leverage modern transformer improvements (RMSNorm, RoPE, SwiGLU, etc.) and sound training practices to maximize accuracy on what your MacBook Pro M1 Max can handle. With ~8M training examples from OpenWebText and a well-tuned model, you can expect a high-quality LLM that holds its own among small-scale language models.

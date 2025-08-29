@@ -1,0 +1,8 @@
+{
+  "vocab_size": 50258,
+  "pad_token": 50257,
+  "eos_token": 50256,
+  "bos_token": 50256,
+  "unk_token": 50256,
+  "tokenizer_type": "gpt2_compatible"
+}
