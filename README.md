@@ -1,108 +1,126 @@
-# ML Environment
+# ML Research Environment - SOTA Transformer
 
-Modern machine learning research platform with state-of-the-art neural network implementations, optimized for Apple Silicon and NVIDIA GPUs.
+## Overview
+Streamlined machine learning research environment focused on state-of-the-art transformer implementation with modern architectural innovations.
 
 ## Quick Start
 
 ```bash
-# Install and check status
+# Install dependencies
 pip install -r requirements.txt
-python run.py --status
 
-# Run your first experiment (2 minutes)
-python run.py rnn --mode character
+# Run architecture demo
+cd algorithms/transformers
+python demo.py
+
+# Train model
+python train.py
 ```
 
-## 🎯 What's Included
+## Current Implementation
 
-| Algorithm | Status | Best Performance | Quick Start |
-|-----------|--------|------------------|-------------|
-| **RNN** | ✅ Production | 39%+ token accuracy, 5.7K samples/sec | `python run.py rnn --mode token` |
-| **CNN** | ✅ Production | 86.15% CIFAR-10 accuracy | `python run.py cnn --train` |
-| **Transformers** | ✅ Production | 99.9% validation accuracy | `python run.py transformers --phase 1` |
-| **Reasoning NNs** | 🔄 In Progress | Test-time compute models | Coming soon |
+### SOTA Transformer ✅
 
-## 🚀 Key Features
+**Architecture Features:**
+- **RMSNorm**: Root Mean Square normalization (more efficient than LayerNorm)
+- **RoPE**: Rotary Position Embeddings (superior position encoding)
+- **SwiGLU**: Gated activation function (outperforms ReLU/GELU)
+- **Pre-normalization**: Modern best practice for training stability
+- **Flash Attention ready**: Support for efficient attention mechanisms
 
-- **Single Command Interface**: `python run.py algorithm --options`
-- **Intelligent Training**: Adaptive stopping, no hardcoded parameters  
-- **Hardware Optimized**: M1 Max (5.7K samples/sec), NVIDIA CUDA, CPU fallback
-- **Research Ready**: Proper benchmarking, statistical analysis, reproducible results
+**Performance:**
+- 22.5M parameters (configurable)
+- Successfully trained on TinyStories dataset
+- Loss reduction: 7.7 → 2.0 over 3 epochs
+- Runs on Apple Silicon MPS in FP32
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-├── algorithms/          # Neural network implementations
-│   ├── rnn/            # Character & token-level RNNs
-│   ├── cnn/            # Image classification CNNs  
-│   ├── transformers/   # Language transformers
-│   └── run.py          # Unified entry point per algorithm
-├── data/               # Datasets (auto-downloaded)
-├── docs/               # Complete documentation
-├── results/            # Experiment results
-├── utils/              # Benchmarking & analysis tools
-└── run.py              # Main entry point
+research/
+├── algorithms/
+│   └── transformers/        # SOTA transformer implementation
+│       ├── sota_components/ # Modular architecture components
+│       │   ├── config.py       # Hyperparameter configuration
+│       │   ├── rmsnorm.py      # RMS normalization
+│       │   ├── rope.py         # Rotary position embeddings
+│       │   ├── swiglu.py       # SwiGLU activation
+│       │   ├── attention.py    # Multi-head attention
+│       │   ├── transformer_block.py  # Complete block
+│       │   ├── embeddings.py   # Token embeddings
+│       │   └── full_model.py   # Main orchestrator
+│       ├── data/           # Tokenizer and cached data
+│       ├── train.py        # Training script
+│       └── demo.py         # Architecture demonstration
+├── data/                   # Raw datasets
+├── utils/                  # Utility functions
+└── requirements.txt        # Dependencies
 ```
 
-## 🛠️ Hardware Support
+## Architecture Flow
 
-- **🍎 Apple Silicon** (M1/M2/M3): MPS acceleration, unified memory optimization
-- **🟢 NVIDIA GPUs**: CUDA with mixed precision training  
-- **💻 CPU**: Universal fallback with optimized batch sizes
-
-## 📚 Documentation
-
-- **[Getting Started](docs/getting-started.md)** - 5-minute setup guide
-- **[Full Documentation](docs/)** - Complete reference  
-- **[Troubleshooting](docs/guides/troubleshooting.md)** - Common issues
-- **[Hardware Guide](docs/guides/hardware.md)** - GPU optimization
-
-## 💡 Usage Examples
-
-```bash
-# Character-level language modeling (fastest)
-python run.py rnn --mode character
-
-# Token-level with maximal accuracy training
-python run.py rnn --mode token --maximal
-
-# Intelligent CNN training on CIFAR-10
-python run.py cnn --train
-
-# Transformer baseline vs optimized comparison  
-python run.py transformers --comparison
-
-# Resume interrupted training
-python run.py cnn --resume
+```
+Input Token IDs
+     ↓
+Token Embeddings
+     ↓
+Transformer Block × N
+  ├─ RMSNorm → Attention + RoPE → Residual
+  └─ RMSNorm → SwiGLU FFN → Residual
+     ↓
+Final RMSNorm
+     ↓
+Output Projection
+     ↓
+Logits
 ```
 
-## 🧪 Research Features
+## Key Technical Insights
 
-- **Comprehensive Benchmarking**: Statistical analysis with confidence intervals
-- **Modular Architecture**: Clean, extensible implementations
-- **Industry Standards**: PyTorch, NumPy, scikit-learn only
-- **Cross-Platform**: Works on macOS, Linux, Windows
-- **Reproducible**: Fixed seeds, deterministic algorithms
+### Mixed Precision on MPS
+- Apple Silicon MPS has fundamental FP16 limitations
+- Mixed dtype operations cause backend errors
+- Solution: Use FP32 for stable training
 
-## ⚡ Performance Expectations
+### Modular Design
+Each component is self-contained and can be understood independently:
+- Easy to modify individual components
+- Clear architectural flow
+- Reusable building blocks
 
-| Hardware | RNN (Character) | CNN (CIFAR-10) | Transformer |
-|----------|-----------------|----------------|-------------|
-| **M1 Max** | 5,720 samples/sec | 9,500 samples/sec | Very fast |
-| **RTX 4090** | ~8,000 samples/sec | ~15,000 samples/sec | Very fast |
-| **CPU** | 32 samples/sec | 200 samples/sec | Slow |
+## Requirements
 
-## 📋 Requirements
+- Python 3.8+
+- PyTorch 2.0+
+- NumPy
+- 8GB+ RAM (16GB recommended)
+- GPU optional (MPS/CUDA supported)
 
-- **Python 3.8+** (3.9+ recommended)
-- **PyTorch 2.0+** 
-- **8GB+ RAM** (16GB+ recommended)
-- **GPU** optional but recommended
+## Hardware Support
 
----
+- **Apple Silicon** (M1/M2/M3): MPS acceleration
+- **NVIDIA GPUs**: CUDA support
+- **CPU**: Universal fallback
 
-**New here?** Start with the [Getting Started Guide](docs/getting-started.md) for a 5-minute walkthrough.
+## Usage Example
 
-**Having issues?** Check the [Troubleshooting Guide](docs/guides/troubleshooting.md).
+```python
+from algorithms.transformers.sota_components.config import SOTAConfig
+from algorithms.transformers.sota_components.full_model import SOTATransformer
 
-**Research usage?** See [full documentation](docs/) for detailed API reference and guides.
+# Configure model
+config = SOTAConfig(
+    vocab_size=50257,
+    d_model=768,
+    num_heads=12,
+    num_layers=12
+)
+
+# Create and use model
+model = SOTATransformer(config)
+logits = model(input_ids)
+generated = model.generate(prompt, max_new_tokens=100)
+```
+
+## License
+MIT

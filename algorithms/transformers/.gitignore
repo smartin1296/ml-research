@@ -1,0 +1,12 @@
+# Data files
+data/cached_tokens.npy
+data/*.npy
+*.pt
+*.pth
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log

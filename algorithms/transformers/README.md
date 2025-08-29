@@ -1,201 +1,102 @@
-# Transformers Module
+# SOTA Transformer - Clean Modular Implementation
 
-Complete implementation of "Attention is All You Need" with comprehensive Phase 1 vs Phase 2 comparison framework.
+## Overview
+State-of-the-art transformer architecture with all modern innovations, organized into clear, readable components.
 
-## Quick Start
+## Architecture Components
 
+The implementation is modularized into distinct files, each representing a key architectural component:
+
+1. **`config.py`** - Configuration dataclass with all hyperparameters
+2. **`rmsnorm.py`** - Root Mean Square Normalization (more efficient than LayerNorm)
+3. **`rope.py`** - Rotary Position Embeddings (superior to absolute positions)
+4. **`swiglu.py`** - SwiGLU activation (gated feed-forward network)
+5. **`attention.py`** - Multi-Head Attention with RoPE integration
+6. **`transformer_block.py`** - Complete transformer block with residuals
+7. **`embeddings.py`** - Token embeddings and output projection
+8. **`full_model.py`** - Main orchestrator that assembles all components
+
+## Key Features
+
+- **RMSNorm**: More efficient normalization used in LLaMA, Gemma
+- **RoPE**: Better position encoding with improved extrapolation
+- **SwiGLU**: Superior feed-forward activation function
+- **Pre-normalization**: Apply norm before sub-layers (modern best practice)
+- **Flash Attention ready**: Optional efficient attention support
+- **Clean architecture**: Each component in its own file for clarity
+
+## Usage
+
+### Quick Demo
 ```bash
-# Baseline transformer (Phase 1)
-python run.py --phase 1
-
-# Advanced optimizations (Phase 2) 
-python run.py --phase 2
-
-# Direct comparison
-python run.py --comparison
-
-# Basic functionality test
-python run.py --test
+python demo.py
 ```
 
-## 🎯 Current Status: ✅ COMPLETED & DEBUGGED
+### Training
+```bash
+python train.py
+```
 
-**Major breakthrough**: Original Phase 1 had catastrophic 0% accuracy due to learning rate issues. After systematic debugging:
-- **Phase 1**: Now achieves **99.9% validation accuracy** 
-- **Phase 2**: Advanced optimizations work correctly
-- **Key finding**: Phase 2 optimizations may hurt small dataset performance (theoretically expected)
-
-## 📊 Implementation Overview
-
-### Phase 1: Baseline Implementation
-- **Architecture**: Standard "Attention is All You Need" transformer
-- **Training**: AdamW with linear warmup + decay
-- **Performance**: 99.9% validation accuracy on TinyStories
-- **Status**: Production ready
-
-### Phase 2: Advanced Optimizations  
-- **Label Smoothing** (0.1): Prevents overconfident predictions
-- **Gradient Accumulation** (2x): Larger effective batch size
-- **Cosine Annealing**: Better convergence than linear decay
-- **Enhanced AdamW**: Transformer-standard betas (0.9, 0.98)
-- **Performance**: Works correctly, may show lower accuracy on small datasets
-
-### Key Technical Insight
-Phase 2 performing "worse" (35% vs 34% accuracy) on small datasets is **theoretically expected**:
-- Label smoothing prevents overfitting (beneficial for large datasets, may hurt small ones)
-- Advanced regularization reduces model capacity when data is limited
-- Optimizations designed for large-scale training (10k+ examples)
-
-## 🧠 Architecture Details
-
+### Component Example
 ```python
-# Model specification
-SimpleTransformer(
-    vocab_size=8192,        # Standard tokenizer vocabulary
-    d_model=256,            # Model dimension
-    num_heads=8,            # Attention heads  
-    num_layers=4,           # Transformer layers
-    d_ff=1024,              # Feed-forward dimension
-    max_seq_len=64          # Maximum sequence length
+from sota_components.config import SOTAConfig
+from sota_components.full_model import SOTATransformer
+
+# Configure model
+config = SOTAConfig(
+    vocab_size=50257,
+    d_model=768,
+    num_heads=12,
+    num_layers=12
 )
+
+# Create model
+model = SOTATransformer(config)
+
+# Forward pass
+logits = model(input_ids)
+
+# Generate text
+generated = model.generate(prompt, max_new_tokens=100)
 ```
 
-**Parameters**: ~1.8M for fair Phase 1 vs Phase 2 comparison
-
-## 🔬 Debugging Journey (Completed)
-
-### Original Problem
-- Phase 1 validation accuracy: **0.002%** (essentially broken)
-- Story generation: Repetitive loops ("time time time...")
-
-### Root Cause Identified  
-- **Learning Rate Too Small**: Original LR=3e-4 was insufficient
-- **Solution**: LR=1e-3 achieves 99.9% validation accuracy
-
-### Systematic Debugging Applied
-1. **Minimal Working Example**: 4-story test → 66.7% accuracy with proper LR
-2. **Realistic Settings**: Confirmed LR=1e-3 enables perfect learning
-3. **Fair Comparison**: Standard tokenizer ensures identical conditions
-
-## 📁 File Organization
+## Architecture Flow
 
 ```
-transformers/
-├── run.py                          # Unified entry point ⭐
-├── phase1_standard.py              # Baseline implementation
-├── phase2_standard.py              # Advanced optimizations  
-├── standard_phase_comparison.py    # Fair comparison framework
-├── standard_tokenizer.py           # Consistent tokenization
-├── test_basic.py                   # Functionality tests
-├── test_story_generation.py        # Generation quality tests
-├── core/                           # Core components
-│   ├── attention.py                # Multi-head attention
-│   ├── models.py                   # Transformer architectures
-│   └── trainer.py                  # Training infrastructure
-├── results/                        # Organized results storage
-└── archive/                        # Historical debug/experimental files
+Input Token IDs
+    ↓
+Token Embeddings
+    ↓
+Transformer Block 1
+  ├─ RMSNorm → Attention + RoPE → Residual
+  └─ RMSNorm → SwiGLU FFN → Residual
+    ↓
+... (more blocks) ...
+    ↓
+Final RMSNorm
+    ↓
+Output Projection
+    ↓
+Logits
 ```
 
-**Cleaned up**: 10+ redundant files archived, only essential files remain visible.
+## Training Results
 
-## 🚀 Usage Examples
+- Successfully trained on TinyStories dataset
+- 22.5M parameters
+- Loss: 7.7 → 2.0 over 3 epochs
+- Pure FP32 on Apple Silicon MPS (FP16 has MPS backend limitations)
 
-### Phase Comparison
-```bash
-# Compare Phase 1 vs 2 with identical conditions
-python run.py --comparison
+## Files
 
-# Expected output:
-# Phase 1: 35% accuracy, 5.4s training
-# Phase 2: 34% accuracy, 13.5s training  
-# Analysis: Phase 2 optimizations working but designed for larger datasets
-```
+- `sota_components/` - Modular architecture components
+- `data/` - Tokenizer and cached data
+- `train.py` - Clean training script
+- `demo.py` - Architecture walkthrough
+- `README.md` - This file
 
-### Individual Phases
-```bash
-# Test baseline transformer
-python run.py --phase 1
-# → 99.9% validation accuracy in ~82 seconds
+## Technical Notes
 
-# Test advanced optimizations
-python run.py --phase 2  
-# → Advanced optimizations working correctly
-```
-
-### Story Generation Testing
-```bash
-python run.py --story-generation
-
-# Sample output:
-# "Once upon a time" → "once upon a time, yes, my, own, ran. but it was."
-# Much better than original repetitive output!
-```
-
-## 📈 Performance Results
-
-### Phase 1 (Fixed Baseline)
-```
-Training Progress:
-Epoch  1: Val Acc=0.331 (33.1%)
-Epoch  3: Val Acc=0.931 (93.1%)  
-Epoch  5: Val Acc=0.993 (99.3%)
-Final:    Val Acc=0.999 (99.9%)
-
-Hardware: M1 Max optimized
-Training Time: 82.5s (20 epochs)  
-Parameters: 4.18M
-```
-
-### Fair Phase Comparison Results
-```
-Phase 1 (Baseline):     35% accuracy, 5.4s training
-Phase 2 (Optimized):    34% accuracy, 13.5s training
-Conclusion: Phase 2 optimizations work correctly but are designed for large-scale data
-```
-
-## 🎓 Research Lessons Learned
-
-### Debugging Best Practices
-1. **Start minimal**: Test with 4-5 simple examples first
-2. **Test learning rates systematically**: Often need 10x higher than expected
-3. **Use consistent tokenizers**: Essential for fair comparisons
-4. **Monitor gradient flow**: Ensure non-zero gradients
-5. **Debug generation early**: Quality issues reveal training problems
-
-### Optimization Insights  
-1. **Label smoothing**: Prevents overconfident predictions, may hurt small datasets
-2. **Scale matters**: Advanced optimizations designed for large datasets (10k+ examples)
-3. **Simple can be better**: Linear warmup often works as well as complex schedules
-4. **Fair comparisons**: Keep everything constant except the optimization being tested
-
-## 🔧 Technical Implementation
-
-### Standard Tokenizer
-- **Vocabulary**: 8,192 words from TinyStories corpus
-- **Consistent**: Same tokenizer used across all phases for fair comparison
-- **BPE-style**: Word-level tokenization with padding/special tokens
-
-### Loss Functions
-- **Phase 1**: Standard CrossEntropy with padding mask
-- **Phase 2**: Label smoothing (0.1) with KL divergence loss
-
-### Training Configurations
-Both phases use **identical** model architecture, data, and validation splits - only training techniques differ.
-
-## 📚 Documentation Archive
-
-Historical debugging documentation preserved in:
-- `DEBUG_SUMMARY.md`: Complete debugging journey
-- `CURRENT_STATUS.md`: Implementation status  
-- `STANDARD_TOKENIZER_IMPLEMENTATION.md`: Tokenizer details
-
-## ✅ Production Readiness
-
-**The transformer module is production-ready with:**
-- ✅ Phase 1 achieving 99.9% validation accuracy
-- ✅ Phase 2 optimizations implemented and working correctly  
-- ✅ Fair comparison framework established
-- ✅ Comprehensive debugging completed
-- ✅ Clean, organized codebase
-
-**Ready for larger scale experiments and research applications!** 🚀
+- MPS (Apple Silicon) has FP16 limitations, use FP32 for stable training
+- Each component is self-contained and can be understood independently
+- The `full_model.py` serves as a high-level overview of the architecture
